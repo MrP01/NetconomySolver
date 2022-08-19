@@ -1,6 +1,17 @@
 use macroquad::prelude::*;
+use std::collections::HashSet;
+use std::hash::Hash;
 
 const CAMERA_DISTANCE: f32 = 8.0;
+
+fn has_unique_elements<T>(iter: T) -> bool
+where
+  T: IntoIterator,
+  T::Item: Eq + Hash,
+{
+  let mut uniq = HashSet::new();
+  iter.into_iter().all(move |x| uniq.insert(x))
+}
 
 trait Drawable {
   fn draw(&self);
@@ -41,7 +52,6 @@ impl Element {
       self.corner_orientation.unwrap().y,
       -self.corner_orientation.unwrap().x,
     ));
-    println!("I was rotated.");
   }
 
   fn unknown_straight() -> Element {
@@ -119,7 +129,6 @@ impl NetconomyCube {
     for i in 1..self.elements.len() {
       let previous = self.elements[i - 1].clone();
       let current = self.elements[i];
-      println!("{:?}", previous);
       assert!(previous._position.is_some());
       assert!(previous._direction.is_some());
       match current.kind {
@@ -131,7 +140,6 @@ impl NetconomyCube {
         }
         ElementType::Corner => {
           let d = previous._direction.unwrap();
-          // let e1 = vec3(d.z, d.y, -d.x);
           let e1 = previous_corner_direction;
           let e2 = d.cross(e1);
           assert!(current.corner_orientation.is_some());
@@ -144,6 +152,10 @@ impl NetconomyCube {
         }
       }
     }
+  }
+
+  fn check_overlaps(&self) -> bool {
+    return !has_unique_elements(self.elements.iter().map(|x| x._position.unwrap().as_i32()));
   }
 }
 
@@ -176,7 +188,7 @@ async fn main() {
     let (mouse_x, mouse_y) = mouse_position();
     let camera_phi = mouse_x / 100.;
     let camera_theta = -mouse_y / 200.;
-    cam_distance += mouse_wheel().1;
+    cam_distance -= mouse_wheel().1;
 
     clear_background(LIGHTGRAY);
 
@@ -198,7 +210,9 @@ async fn main() {
 
     // Back to screen space, render some text
     set_default_camera();
-    draw_text("Solve the cube:", 10.0, 20.0, 30.0, BLACK);
+    if cube.check_overlaps() {
+      draw_text("Has overlap!", 10.0, 20.0, 30.0, RED);
+    }
 
     next_frame().await
   }
