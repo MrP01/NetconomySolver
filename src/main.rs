@@ -13,7 +13,6 @@ async fn main() {
   // let mut cube = cube::NetconomyCube::from_cube_string(String::from("scscscscccc"));
   cube.compute_positions();
   let mut bounding_cuboid = cube.bounding_cuboid();
-  let mut has_overlap = cube.check_overlaps();
 
   let mut cam_distance = CAMERA_DISTANCE;
   let mut solved: bool = false;
@@ -61,17 +60,15 @@ async fn main() {
     if is_key_pressed(KeyCode::Space) && !solved {
       cube.rotate_one();
       bounding_cuboid = cube.bounding_cuboid();
-      has_overlap = cube.check_overlaps();
     }
     if is_key_pressed(KeyCode::S) {
       solving = !solving;
     }
     if (solving || is_key_down(KeyCode::Enter)) && !solved {
-      for _i in 0..8 {
+      for _i in 0..999 {
         cube.rotate_one();
         bounding_cuboid = cube.bounding_cuboid();
-        has_overlap = cube.check_overlaps();
-        if bounding_cuboid == ivec3(3, 3, 3) && !has_overlap {
+        if bounding_cuboid == ivec3(3, 3, 3) && !cube.check_overlaps() {
           solved = true;
           println!("Solved!!");
           break;
@@ -115,7 +112,7 @@ async fn main() {
       30.0,
       BLACK,
     );
-    if has_overlap {
+    if cube.check_overlaps() {
       draw_text("Has overlap!", 10.0, 50.0, 30.0, RED);
     }
 

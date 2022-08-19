@@ -1,4 +1,6 @@
-use macroquad::prelude::{draw_cube, ivec2, ivec3, IVec2, IVec3, BLUE, BROWN};
+use macroquad::prelude::{
+  draw_cube, draw_line_3d, ivec2, ivec3, vec3, Color, IVec2, IVec3, BLACK, BROWN,
+};
 
 pub trait Drawable {
   fn draw(&self);
@@ -23,17 +25,22 @@ impl Drawable for Element {
       match self.kind {
         ElementType::Straight => draw_cube(
           self._position.unwrap().as_f32(),
-          ivec3(1, 1, 1).as_f32(),
+          vec3(0.4, 0.4, 0.4),
           None,
           BROWN,
         ),
         ElementType::Corner => draw_cube(
           self._position.unwrap().as_f32(),
-          ivec3(1, 1, 1).as_f32(),
+          vec3(0.6, 0.6, 0.6),
           None,
-          BLUE,
+          Color::new(0.00, 0.47, 0.95, 0.8),
         ),
       }
+      draw_line_3d(
+        self._position.unwrap().as_f32(),
+        (self._position.unwrap() + self._direction.unwrap()).as_f32(),
+        BLACK,
+      )
     }
   }
 }
