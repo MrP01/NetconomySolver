@@ -3,9 +3,16 @@ pub mod utils;
 use element::{Drawable, Element, ElementType};
 use macroquad::prelude::{ivec3, IVec3};
 
+const DOF_PER_CORNER: usize = 4;
+
+pub struct AlgoState {
+  pub cursor: usize,
+}
+
 pub struct NetconomyCube {
   elements: Vec<Element>,
-  corner_indices: Vec<usize>,
+  _corner_indices: Vec<usize>,
+  pub _algo_state: AlgoState,
 }
 impl Drawable for NetconomyCube {
   fn draw(&self) {
@@ -31,12 +38,13 @@ impl NetconomyCube {
     elements.push(Element::last_element());
     return NetconomyCube {
       elements,
-      corner_indices,
+      _corner_indices: corner_indices,
+      _algo_state: AlgoState { cursor: 1 },
     };
   }
 
   pub fn corner(&mut self, cindex: usize) -> &mut Element {
-    return &mut self.elements[self.corner_indices[cindex]];
+    return &mut self.elements[self._corner_indices[cindex]];
   }
 
   pub fn compute_positions(&mut self) {
@@ -85,4 +93,18 @@ impl NetconomyCube {
     let max_z = z_iter.max().unwrap();
     return ivec3(max_x - min_x, max_y - min_y, max_z - min_z) + ivec3(1, 1, 1);
   }
+
+  pub fn rotate_one(&mut self) {
+    for cindex in 0..self._corner_indices.len() - 1 {
+      if self._algo_state.cursor % DOF_PER_CORNER.pow(cindex as u32) == 0 {
+        self
+          .corner(self._corner_indices.len() - cindex - 1)
+          .rotate_me();
+      }
+    }
+    self._algo_state.cursor += 1;
+    self.compute_positions();
+  }
+
+  // pub fn solve(&mut self) {}
 }

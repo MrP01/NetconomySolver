@@ -1,4 +1,7 @@
-use macroquad::prelude::*;
+use macroquad::prelude::{
+  clear_background, draw_text, is_key_down, is_key_pressed, ivec3, mouse_position, mouse_wheel,
+  next_frame, set_camera, set_default_camera, vec3, Camera3D, KeyCode, BLACK, LIGHTGRAY, RED,
+};
 mod cube;
 use cube::element::Drawable;
 
@@ -7,9 +10,14 @@ const CAMERA_DISTANCE: f32 = 8.0;
 #[macroquad::main("Netconomy Cube Solver")]
 async fn main() {
   let mut cube = cube::NetconomyCube::from_cube_string(String::from("scscscsccccscscccsccscccs"));
+  // let mut cube = cube::NetconomyCube::from_cube_string(String::from("scscscscccc"));
   cube.compute_positions();
+  let mut bounding_cuboid = cube.bounding_cuboid();
+  let mut has_overlap = cube.check_overlaps();
 
   let mut cam_distance = CAMERA_DISTANCE;
+  let mut solved: bool = false;
+  let mut solving: bool = false;
   loop {
     if is_key_down(KeyCode::LeftControl) && is_key_down(KeyCode::W) {
       break;
@@ -30,6 +38,47 @@ async fn main() {
       cube.corner(3).rotate_me();
       cube.compute_positions();
     }
+    if is_key_pressed(KeyCode::Key5) {
+      cube.corner(4).rotate_me();
+      cube.compute_positions();
+    }
+    if is_key_pressed(KeyCode::Key6) {
+      cube.corner(5).rotate_me();
+      cube.compute_positions();
+    }
+    if is_key_pressed(KeyCode::Key7) {
+      cube.corner(6).rotate_me();
+      cube.compute_positions();
+    }
+    if is_key_pressed(KeyCode::Key8) {
+      cube.corner(7).rotate_me();
+      cube.compute_positions();
+    }
+    if is_key_pressed(KeyCode::Key9) {
+      cube.corner(8).rotate_me();
+      cube.compute_positions();
+    }
+    if is_key_pressed(KeyCode::Space) && !solved {
+      cube.rotate_one();
+      bounding_cuboid = cube.bounding_cuboid();
+      has_overlap = cube.check_overlaps();
+    }
+    if is_key_pressed(KeyCode::S) {
+      solving = !solving;
+    }
+    if (solving || is_key_down(KeyCode::Enter)) && !solved {
+      for _i in 0..8 {
+        cube.rotate_one();
+        bounding_cuboid = cube.bounding_cuboid();
+        has_overlap = cube.check_overlaps();
+        if bounding_cuboid == ivec3(3, 3, 3) && !has_overlap {
+          solved = true;
+          println!("Solved!!");
+          break;
+        }
+      }
+    }
+
     let (mouse_x, mouse_y) = mouse_position();
     let camera_phi = mouse_x / 100.;
     let camera_theta = -mouse_y / 200.;
@@ -56,13 +105,17 @@ async fn main() {
     // Back to screen space, render some text
     set_default_camera();
     draw_text(
-      format!("Bounding Cuboid Size: {:?}", cube.bounding_cuboid()).as_str(),
+      format!(
+        "Bounding Cuboid Size: {:?}, it: {:?}",
+        bounding_cuboid, cube._algo_state.cursor
+      )
+      .as_str(),
       10.0,
       20.0,
       30.0,
       BLACK,
     );
-    if cube.check_overlaps() {
+    if has_overlap {
       draw_text("Has overlap!", 10.0, 50.0, 30.0, RED);
     }
 
