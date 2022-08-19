@@ -95,8 +95,6 @@ async fn main() {
       ..Default::default()
     });
 
-    // draw_grid(20, 1., BLACK, GRAY);
-    // draw_cube(vec3(2., 0., -2.), vec3(0.4, 0.4, 0.4), None, BLACK);
     cube.draw();
 
     // Back to screen space, render some text
