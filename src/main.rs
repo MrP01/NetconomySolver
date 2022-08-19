@@ -6,7 +6,7 @@ trait Drawable {
   fn draw(&self);
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 enum ElementType {
   Straight,
   Corner,
@@ -33,6 +33,15 @@ impl Element {
   fn set(&mut self, pos: Vec3, dir: Vec3) {
     self._position = Some(pos);
     self._direction = Some(dir);
+  }
+
+  fn rotate_me(&mut self) {
+    assert!(self.kind == ElementType::Corner);
+    self.corner_orientation = Some(vec2(
+      self.corner_orientation.unwrap().y,
+      -self.corner_orientation.unwrap().x,
+    ));
+    println!("I was rotated.");
   }
 
   fn unknown_straight() -> Element {
@@ -71,6 +80,7 @@ impl Element {
 
 struct NetconomyCube {
   elements: Vec<Element>,
+  corner_indices: Vec<usize>,
 }
 impl Drawable for NetconomyCube {
   fn draw(&self) {
@@ -80,13 +90,39 @@ impl Drawable for NetconomyCube {
   }
 }
 impl NetconomyCube {
+  fn from_cube_string(string: String) -> NetconomyCube {
+    let mut elements = vec![Element::first_element()];
+    let mut corner_indices: Vec<usize> = vec![];
+    for (i, character) in string.chars().enumerate() {
+      match character {
+        's' => elements.push(Element::unknown_straight()),
+        'c' => {
+          elements.push(Element::unknown_corner());
+          corner_indices.push(i + 1);
+        }
+        _ => unreachable!(),
+      }
+    }
+    elements.push(Element::last_element());
+    return NetconomyCube {
+      elements,
+      corner_indices,
+    };
+  }
+
+  fn corner(&mut self, cindex: usize) -> &mut Element {
+    return &mut self.elements[self.corner_indices[cindex]];
+  }
+
   fn compute_positions(&mut self) {
+    let mut previous_corner_direction = vec3(0., 1., 0.);
     for i in 1..self.elements.len() {
       let previous = self.elements[i - 1].clone();
+      let current = self.elements[i];
       println!("{:?}", previous);
       assert!(previous._position.is_some());
       assert!(previous._direction.is_some());
-      match previous.kind {
+      match current.kind {
         ElementType::Straight => {
           self.elements[i].set(
             previous._position.unwrap() + previous._direction.unwrap(),
@@ -95,14 +131,16 @@ impl NetconomyCube {
         }
         ElementType::Corner => {
           let d = previous._direction.unwrap();
-          let e1 = vec3(d.z, d.y, -d.x);
-          let e2 = vec3(d.x, d.z, -d.y);
-          assert!(previous.corner_orientation.is_some());
-          let co = previous.corner_orientation.unwrap();
+          // let e1 = vec3(d.z, d.y, -d.x);
+          let e1 = previous_corner_direction;
+          let e2 = d.cross(e1);
+          assert!(current.corner_orientation.is_some());
+          let co = current.corner_orientation.unwrap();
           self.elements[i].set(
             previous._position.unwrap() + previous._direction.unwrap(),
             co.x * e1 + co.y * e2,
           );
+          previous_corner_direction = d;
         }
       }
     }
@@ -111,35 +149,43 @@ impl NetconomyCube {
 
 #[macroquad::main("Netconomy Cube Solver")]
 async fn main() {
-  let cube_string = String::from("scscscsccccscscccsccscccs");
-  let mut elements = vec![Element::first_element()];
-  for character in cube_string.chars() {
-    match character {
-      's' => elements.push(Element::unknown_straight()),
-      'c' => elements.push(Element::unknown_corner()),
-      _ => unreachable!(),
-    }
-  }
-  elements.push(Element::last_element());
-  let mut cube = NetconomyCube { elements };
+  let mut cube = NetconomyCube::from_cube_string(String::from("scscscsccccscscccsccscccs"));
   cube.compute_positions();
 
+  let mut cam_distance = CAMERA_DISTANCE;
   loop {
     if is_key_down(KeyCode::LeftControl) && is_key_down(KeyCode::W) {
       break;
     }
+    if is_key_pressed(KeyCode::Key1) {
+      cube.corner(0).rotate_me();
+      cube.compute_positions();
+    }
+    if is_key_pressed(KeyCode::Key2) {
+      cube.corner(1).rotate_me();
+      cube.compute_positions();
+    }
+    if is_key_pressed(KeyCode::Key3) {
+      cube.corner(2).rotate_me();
+      cube.compute_positions();
+    }
+    if is_key_pressed(KeyCode::Key4) {
+      cube.corner(3).rotate_me();
+      cube.compute_positions();
+    }
     let (mouse_x, mouse_y) = mouse_position();
     let camera_phi = mouse_x / 100.;
     let camera_theta = -mouse_y / 200.;
+    cam_distance += mouse_wheel().1;
 
     clear_background(LIGHTGRAY);
 
     // Going 3d!
     set_camera(&Camera3D {
       position: vec3(
-        camera_theta.sin() * camera_phi.cos() * CAMERA_DISTANCE,
-        camera_theta.sin() * camera_phi.sin() * CAMERA_DISTANCE,
-        camera_theta.cos() * CAMERA_DISTANCE,
+        camera_theta.sin() * camera_phi.cos() * cam_distance,
+        camera_theta.sin() * camera_phi.sin() * cam_distance,
+        camera_theta.cos() * cam_distance,
       ),
       up: vec3(0., 0., 1.),
       target: vec3(0., 0., 0.),
