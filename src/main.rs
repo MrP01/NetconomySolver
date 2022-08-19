@@ -55,8 +55,15 @@ async fn main() {
 
     // Back to screen space, render some text
     set_default_camera();
+    draw_text(
+      format!("Bounding Cuboid Size: {:?}", cube.bounding_cuboid()).as_str(),
+      10.0,
+      20.0,
+      30.0,
+      BLACK,
+    );
     if cube.check_overlaps() {
-      draw_text("Has overlap!", 10.0, 20.0, 30.0, RED);
+      draw_text("Has overlap!", 10.0, 50.0, 30.0, RED);
     }
 
     next_frame().await

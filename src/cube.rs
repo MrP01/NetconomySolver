@@ -1,7 +1,7 @@
 pub mod element;
 pub mod utils;
 use element::{Drawable, Element, ElementType};
-use macroquad::prelude::vec3;
+use macroquad::prelude::{ivec3, IVec3};
 
 pub struct NetconomyCube {
   elements: Vec<Element>,
@@ -40,7 +40,7 @@ impl NetconomyCube {
   }
 
   pub fn compute_positions(&mut self) {
-    let mut previous_corner_direction = vec3(0., 1., 0.);
+    let mut previous_corner_direction = ivec3(0, 1, 0);
     for i in 1..self.elements.len() {
       let previous = self.elements[i - 1].clone();
       let current = self.elements[i];
@@ -70,8 +70,19 @@ impl NetconomyCube {
   }
 
   pub fn check_overlaps(&self) -> bool {
-    return !utils::has_unique_elements(
-      self.elements.iter().map(|x| x._position.unwrap().as_i32()),
-    );
+    return !utils::has_unique_elements(self.elements.iter().map(|x| x._position.unwrap()));
+  }
+
+  pub fn bounding_cuboid(&self) -> IVec3 {
+    let x_iter = self.elements.iter().map(|x| x._position.unwrap().x);
+    let min_x = x_iter.clone().min().unwrap();
+    let max_x = x_iter.max().unwrap();
+    let y_iter = self.elements.iter().map(|x| x._position.unwrap().y);
+    let min_y = y_iter.clone().min().unwrap();
+    let max_y = y_iter.max().unwrap();
+    let z_iter = self.elements.iter().map(|x| x._position.unwrap().z);
+    let min_z = z_iter.clone().min().unwrap();
+    let max_z = z_iter.max().unwrap();
+    return ivec3(max_x - min_x, max_y - min_y, max_z - min_z) + ivec3(1, 1, 1);
   }
 }
