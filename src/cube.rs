@@ -12,6 +12,7 @@ pub struct AlgoState {
 pub struct NetconomyCube {
   elements: Vec<Element>,
   _corner_indices: Vec<usize>,
+  _moduli: Vec<usize>,
   pub _algo_state: AlgoState,
 }
 impl Drawable for NetconomyCube {
@@ -38,7 +39,11 @@ impl NetconomyCube {
     elements.push(Element::last_element());
     return NetconomyCube {
       elements,
-      _corner_indices: corner_indices,
+      _corner_indices: corner_indices.clone(),
+      _moduli: corner_indices
+        .iter()
+        .map(|x| DOF_PER_CORNER.pow(*x as u32))
+        .collect(),
       _algo_state: AlgoState { cursor: 1 },
     };
   }
@@ -82,29 +87,33 @@ impl NetconomyCube {
   }
 
   pub fn bounding_cuboid(&self) -> IVec3 {
-    let x_iter = self.elements.iter().map(|x| x._position.unwrap().x);
+    return self.n_bounding_cuboid(self.elements.len());
+  }
+
+  pub fn n_bounding_cuboid(&self, n: usize) -> IVec3 {
+    let x_iter = self.elements[..n].iter().map(|x| x._position.unwrap().x);
     let min_x = x_iter.clone().min().unwrap();
     let max_x = x_iter.max().unwrap();
-    let y_iter = self.elements.iter().map(|x| x._position.unwrap().y);
+    let y_iter = self.elements[..n].iter().map(|x| x._position.unwrap().y);
     let min_y = y_iter.clone().min().unwrap();
     let max_y = y_iter.max().unwrap();
-    let z_iter = self.elements.iter().map(|x| x._position.unwrap().z);
+    let z_iter = self.elements[..n].iter().map(|x| x._position.unwrap().z);
     let min_z = z_iter.clone().min().unwrap();
     let max_z = z_iter.max().unwrap();
     return ivec3(max_x - min_x, max_y - min_y, max_z - min_z) + ivec3(1, 1, 1);
   }
 
   pub fn rotate_one(&mut self) {
-    for cindex in 0..self._corner_indices.len() - 1 {
-      if self._algo_state.cursor % DOF_PER_CORNER.pow(cindex as u32) == 0 {
-        self
-          .corner(self._corner_indices.len() - cindex - 1)
-          .rotate_me();
+    let corners = self._corner_indices.len();
+    for cindex in 0..corners - 1 {
+      if self._algo_state.cursor % self._moduli[cindex] == 0 {
+        self.corner(corners - cindex - 1).rotate_me();
       }
     }
     self._algo_state.cursor += 1;
     self.compute_positions();
   }
 
+  pub fn smart_iter(&mut self) {}
   // pub fn solve(&mut self) {}
 }
