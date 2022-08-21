@@ -12,7 +12,6 @@ async fn main() {
   let mut cube = cube::NetconomyCube::from_cube_string(String::from("scscscsccccscscccsccscccs"));
   // let mut cube = cube::NetconomyCube::from_cube_string(String::from("scscscscccc"));
   cube.compute_positions();
-  let mut bounding_cuboid = cube.bounding_cuboid();
 
   let mut cam_distance = CAMERA_DISTANCE;
   let mut solved: bool = false;
@@ -57,9 +56,11 @@ async fn main() {
       cube.corner(8).rotate_me();
       cube.compute_positions();
     }
+    if is_key_pressed(KeyCode::F) {
+      cube.fold_in();
+    }
     if is_key_pressed(KeyCode::Space) && !solved {
       cube.rotate_one();
-      bounding_cuboid = cube.bounding_cuboid();
     }
     if is_key_pressed(KeyCode::S) {
       solving = !solving;
@@ -67,8 +68,7 @@ async fn main() {
     if (solving || is_key_down(KeyCode::Enter)) && !solved {
       for _i in 0..999 {
         cube.rotate_one();
-        bounding_cuboid = cube.bounding_cuboid();
-        if bounding_cuboid == ivec3(3, 3, 3) && !cube.check_overlaps() {
+        if cube._bounding_cuboid == ivec3(3, 3, 3) && !cube.check_overlaps() {
           solved = true;
           println!("Solved!!");
           break;
@@ -102,7 +102,7 @@ async fn main() {
     draw_text(
       format!(
         "Bounding Cuboid Size: {:?}, it: {:?}",
-        bounding_cuboid, cube._algo_state.cursor
+        cube._bounding_cuboid, cube._algo_state.cursor
       )
       .as_str(),
       10.0,

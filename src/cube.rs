@@ -13,6 +13,7 @@ pub struct NetconomyCube {
   elements: Vec<Element>,
   _corner_indices: Vec<usize>,
   _moduli: Vec<usize>,
+  pub _bounding_cuboid: IVec3,
   pub _algo_state: AlgoState,
 }
 impl Drawable for NetconomyCube {
@@ -40,10 +41,10 @@ impl NetconomyCube {
     return NetconomyCube {
       elements,
       _corner_indices: corner_indices.clone(),
-      _moduli: corner_indices
-        .iter()
-        .map(|x| DOF_PER_CORNER.pow(*x as u32))
+      _moduli: (0..corner_indices.len())
+        .map(|x| DOF_PER_CORNER.pow(x as u32))
         .collect(),
+      _bounding_cuboid: ivec3(1, 1, 1),
       _algo_state: AlgoState { cursor: 1 },
     };
   }
@@ -80,14 +81,11 @@ impl NetconomyCube {
         }
       }
     }
+    self._bounding_cuboid = self.n_bounding_cuboid(self.elements.len());
   }
 
   pub fn check_overlaps(&self) -> bool {
     return !utils::has_unique_elements(self.elements.iter().map(|x| x._position.unwrap()));
-  }
-
-  pub fn bounding_cuboid(&self) -> IVec3 {
-    return self.n_bounding_cuboid(self.elements.len());
   }
 
   pub fn n_bounding_cuboid(&self, n: usize) -> IVec3 {
@@ -114,6 +112,21 @@ impl NetconomyCube {
     self.compute_positions();
   }
 
-  pub fn smart_iter(&mut self) {}
+  pub fn fold_in(&mut self) {
+    let corners = self._corner_indices.len();
+    for cindex in 0..corners - 1 {
+      let n_cuboid = self.n_bounding_cuboid(self._corner_indices[cindex + 1] + 1);
+      println!("Corner {:?}, n_cuboid: {:?}", cindex, n_cuboid);
+      if n_cuboid.x > 3 || n_cuboid.y > 3 || n_cuboid.z > 3 {
+        for _i in 0..4 {
+          self.corner(cindex).rotate_me();
+          self.compute_positions();
+          if !self.check_overlaps() {
+            break;
+          }
+        }
+      }
+    }
+  }
   // pub fn solve(&mut self) {}
 }
