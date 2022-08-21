@@ -101,8 +101,10 @@ async fn main() {
     set_default_camera();
     draw_text(
       format!(
-        "Bounding Cuboid Size: {:?}, it: {:?}",
-        cube._bounding_cuboid, cube._algo_state.cursor
+        "Bounding Cuboid Size: {:?}, it: {:?} / {:?}",
+        cube._bounding_cuboid,
+        cube._algo_state.cursor,
+        cube::DOF_PER_CORNER.pow(cube.corner_count() as u32)
       )
       .as_str(),
       10.0,

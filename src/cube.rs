@@ -3,7 +3,7 @@ pub mod utils;
 use element::{Drawable, Element, ElementType};
 use macroquad::prelude::{ivec3, IVec3};
 
-const DOF_PER_CORNER: usize = 4;
+pub const DOF_PER_CORNER: usize = 4;
 
 pub struct AlgoState {
   pub cursor: usize,
@@ -47,6 +47,10 @@ impl NetconomyCube {
       _bounding_cuboid: ivec3(1, 1, 1),
       _algo_state: AlgoState { cursor: 1 },
     };
+  }
+
+  pub fn corner_count(&self) -> usize {
+    return self._corner_indices.len();
   }
 
   pub fn corner(&mut self, cindex: usize) -> &mut Element {
