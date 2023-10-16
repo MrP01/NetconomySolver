@@ -24,21 +24,21 @@ impl Drawable for Element {
     if self._position.is_some() {
       match self.kind {
         ElementType::Straight => draw_cube(
-          self._position.unwrap().as_f32(),
+          self._position.unwrap().as_vec3(),
           vec3(0.4, 0.4, 0.4),
           None,
           BROWN,
         ),
         ElementType::Corner => draw_cube(
-          self._position.unwrap().as_f32(),
+          self._position.unwrap().as_vec3(),
           vec3(0.6, 0.6, 0.6),
           None,
           Color::new(0.00, 0.47, 0.95, 0.8),
         ),
       }
       draw_line_3d(
-        self._position.unwrap().as_f32(),
-        (self._position.unwrap() + self._direction.unwrap()).as_f32(),
+        self._position.unwrap().as_vec3(),
+        (self._position.unwrap() + self._direction.unwrap()).as_vec3(),
         BLACK,
       )
     }
